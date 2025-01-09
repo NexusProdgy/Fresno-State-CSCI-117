@@ -1,0 +1,135 @@
+// Haskell version of a variation on fib:
+//    fib :: Integer -> Integer
+//    fib 0 = 1
+//    fib 1 = 2
+//    fib n = fib (n-1) + fib (n-2)
+//
+// Rewrite fib in Oz kernel syntax using the template below, including
+// a "skip Stack" command added to the first base case (n=0), using the 
+// primitive operations {Eq X Y B}, {IntMinus X Y A}, and {IntPlus X Y A}.
+// 
+// Run this file through the Oz interpreter by calling
+//    runFull "declarative" "fib_oz.txt" "fib_oz.out"
+// in ghci and give a brief explanation of each of the stack outputs.
+
+local Fib X Result in
+  proc {Fib X FibSum} IsZero in
+    {Eq X 0 IsZero}
+    if IsZero then
+      FibSum = 0
+      skip Stack
+    else IsOne in
+      {Eq X 1 IsOne}
+      if IsOne then
+        FibSum = 1
+      else X1 X2 Fib1 Fib2 in
+        {IntMinus X 1 X1}
+        {IntMinus X 2 X2}
+        {Fib X1 Fib1}
+        {Fib X2 Fib2}
+        {IntPlus Fib1 Fib2 FibSum}
+      end
+    end
+  end
+
+  X = 4
+  {Fib X Result}
+  skip Browse Result
+end
+
+{-
+
+-Output
+
+Stack 1 (Left Tree fib(0)): 
+{IntPlus} of 1 & 0      -> local [\"EXU1\",\"EXU2\",\"EXU3\"] [EXU1 = Fib1,EXU2 = Fib2,EXU3 = FibSum,\"IntPlus\" \"EXU1\" \"EXU2\" \"EXU3\"]
+{Fib} of 1              -> local [\"EXU1\",\"EXU2\"] [EXU1 = X2,EXU2 = Fib2,\"Fib\" \"EXU1\" \"EXU2\"]
+{IntPlus} of 1 & fib(1) -> local [\"EXU1\",\"EXU2\",\"EXU3\"] [EXU1 = Fib1,EXU2 = Fib2,EXU3 = FibSum,\"IntPlus\" \"EXU1\" \"EXU2\" \"EXU3\"]
+{Fib} of 2 (Right Tree) -> local [\"EXU1\",\"EXU2\"] [EXU1 = X2,EXU2 = Fib2,\"Fib\" \"EXU1\" \"EXU2\"]
+{IntPlus} of 2 & 1      -> local [\"EXU1\",\"EXU2\",\"EXU3\"] [EXU1 = Fib1,EXU2 = Fib2,EXU3 = FibSum,\"IntPlus\" \"EXU1\" \"EXU2\" \"EXU3\"]
+skip/BResult
+
+
+Stack 2 (Right Tree fib(0)): 
+{IntPlus} of 1 & 0 -> local [\"EXU1\",\"EXU2\",\"EXU3\"] [EXU1 = Fib1,EXU2 = Fib2,EXU3 = FibSum,\"IntPlus\" \"EXU1\" \"EXU2\" \"EXU3\"]
+{IntPlus} of 2 & 1 -> local [\"EXU1\",\"EXU2\",\"EXU3\"] [EXU1 = Fib1,EXU2 = Fib2,EXU3 = FibSum,\"IntPlus\" \"EXU1\" \"EXU2\" \"EXU3\"]
+skip/BResult
+
+fib.out text
+[
+  local ["X", "Result", "Fib"] [
+    Fib = proc {$ X FibSum} [
+      local ["IsZero"] [
+        local ["EXU1", "EXU2", "EXU3"] [
+          EXU1 = X, EXU2 = 0, EXU3 = IsZero,
+          "Eq" "EXU1" "EXU2" "EXU3"
+        ],
+        local ["EXU1"] [
+          EXU1 = IsZero,
+          if EXU1 then [
+            FibSum = 0,
+            skip/st
+          ] else [
+            local ["IsOne"] [
+              local ["EXU1", "EXU2", "EXU3"] [
+                EXU1 = X, EXU2 = 1, EXU3 = IsOne,
+                "Eq" "EXU1" "EXU2" "EXU3"
+              ],
+              local ["EXU1"] [
+                EXU1 = IsOne,
+                if EXU1 then [
+                  FibSum = 1
+                ] else [
+                  local ["X1", "X2", "Fib1", "Fib2"] [
+                    local ["EXU1", "EXU2", "EXU3"] [
+                      EXU1 = X, EXU2 = 1, EXU3 = X1,
+                      "IntMinus" "EXU1" "EXU2" "EXU3"
+                    ],
+                    local ["EXU1","EXU2","EXU3"] [
+                      EXU1 = X,EXU2 = 2,EXU3 = X2,
+                      "IntMinus" "EXU1" "EXU2" "EXU3"
+                    ],
+                    local ["EXU1","EXU2"] [
+                      EXU1 = X1, EXU2 = Fib1,
+                      "Fib" "EXU1" "EXU2"
+                    ],
+                    local ["EXU1","EXU2"] [
+                      EXU1 = X2, EXU2 = Fib2,
+                      "Fib" "EXU1" "EXU2"
+                    ],
+                    local ["EXU1","EXU2","EXU3"] [
+                      EXU1 = Fib1, EXU2 = Fib2, EXU3 = FibSum,
+                      "IntPlus" "EXU1" "EXU2" "EXU3"
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ],
+    X = 4,
+    local ["EXU1","EXU2"] [
+      EXU1 = X,EXU2 = Result,
+      "Fib" "EXU1" "EXU2"
+    ],
+    skip/BResult
+  ]
+]
+-Description 
+Stack 1 
+
+It starts with the base case fib(0), where Fib1 = 1 and Fib2 = 0.
+The first operation adds 1 and 0 to compute FibSum.
+Next, the Fibonacci function is applied to Fib1, yielding X2 as the result, and Fib2 remains unchanged.
+Then the second operation computes the sum of 1 and the result of the Fibonacci function applied to Fib2.
+Finally the code terminates with a skip/BResult indicating that the result is ready.
+
+Stack 2 
+
+Stack 2 also starts with the base case of fib(0), where Fib1 = 1 and Fib2 = 0.
+The first operation adds 1 and 0 to compute FibSum.
+Then another operation adds 2 and 1 to compute a new FibSum.
+Finally the code terminates with a skip/BResult command. 
+-}
